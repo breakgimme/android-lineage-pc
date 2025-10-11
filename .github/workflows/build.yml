@@ -1,0 +1,44 @@
+name: build
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner'
+        required: true
+        type: string
+        default: 'self-hosted' # ubuntu-latest
+
+jobs:
+  build:
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set ENV
+        run: | 
+          chmod +x *.sh
+          echo "VERSION=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
+    
+      - name: Build
+        env:
+            DEBIAN_FRONTEND: noninteractive
+        run: |
+          ./build.sh
+
+      - name: Set
+        run: |
+          echo "ZIP=$(find android/lineage/out/target/product/virtio_arm64only/VirtualMachine/UTM/ -name UTM-VM*.zip)" >> $GITHUB_ENV
+          echo "BOOT=$(find android/lineage/out/target/product/virtio_arm64only/ -name boot.img)" >> $GITHUB_ENV
+          echo "RECOVERY=$(find android/lineage/out/target/product/virtio_arm64only/ -name recovery.img)" >> $GITHUB_ENV
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: v${{ env.VERSION }}
+          tag_name: v${{ env.VERSION }}
+          files: |
+            ${{ env.ZIP }}
+            ${{ env.BOOT }}
+            ${{ env.RECOVERY }}
