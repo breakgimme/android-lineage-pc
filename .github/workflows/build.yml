@@ -28,9 +28,10 @@ jobs:
 
       - name: Set
         run: |
-          echo "ZIP=$(find android/lineage/out/target/product/virtio_arm64only/VirtualMachine/UTM/ -name UTM-VM*.zip)" >> $GITHUB_ENV
-          echo "BOOT=$(find android/lineage/out/target/product/virtio_arm64only/ -name boot.img)" >> $GITHUB_ENV
-          echo "RECOVERY=$(find android/lineage/out/target/product/virtio_arm64only/ -name recovery.img)" >> $GITHUB_ENV
+          echo "UTM=$(find android/lineage/out/target/product/virtio_arm64only/VirtualMachine/UTM/ -name UTM-VM*.zip)" >> $GITHUB_ENV
+          echo "ZIP=$(find android/lineage/out/target/product/virtio_arm64only/ -name *ota.zip)" >> $GITHUB_ENV
+          echo "BOOT=$(find android/lineage/out/target/product/virtio_arm64only/boot.img)" >> $GITHUB_ENV
+          echo "RECOVERY=$(find android/lineage/out/target/product/virtio_arm64only/recovery.img)" >> $GITHUB_ENV
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -39,6 +40,8 @@ jobs:
           name: v${{ env.VERSION }}
           tag_name: v${{ env.VERSION }}
           files: |
+            recovery-userdebug.img
+            ${{ env.UTM }}
             ${{ env.ZIP }}
             ${{ env.BOOT }}
             ${{ env.RECOVERY }}
