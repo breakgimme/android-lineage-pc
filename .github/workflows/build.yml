@@ -62,7 +62,7 @@ jobs:
     name: Delete Hetzner Cloud runner
     needs:
       - create-runner # required to get output from the create-runner job
-      - do-the-job # required to wait when the main job is done
+      - build # required to wait when the main job is done
     runs-on: ubuntu-latest
     if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
     steps:
