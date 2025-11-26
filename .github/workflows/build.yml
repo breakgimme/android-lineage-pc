@@ -2,27 +2,39 @@ name: Build
 
 on:
   workflow_dispatch:
-    inputs:
-      runner:
-        description: 'Runner'
-        required: true
-        type: string
-        default: 'ubuntu-latest'
 
 jobs:
+  create-runner:
+    name: Create Hetzner Cloud runner
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.create-hcloud-runner.outputs.label }}
+      server_id: ${{ steps.create-hcloud-runner.outputs.server_id }}
+    steps:
+      - name: Create runner
+        id: create-hcloud-runner
+        uses: Cyclenerd/hcloud-github-runner@v1
+        with:
+          mode: create
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+          server_type: cx53
+          location: nbg1 # Nuremberg, Germany
+          image: ubuntu-22.04
   build:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted' }}
+    needs: create-runner
+    runs-on: ${{ needs.create-runner.outputs.label }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Set ENV
-        run: | 
+        run: |
           chmod +x *.sh
           echo "VERSION=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
-    
+
       - name: Build
         env:
-            DEBIAN_FRONTEND: noninteractive
+          DEBIAN_FRONTEND: noninteractive
         run: |
           ./build.sh
 
@@ -46,3 +58,19 @@ jobs:
             ${{ env.RAMDISK }}
             ${{ env.RECOVERY }}
             ${{ env.VENDOR }}
+  delete-runner:
+    name: Delete Hetzner Cloud runner
+    needs:
+      - create-runner # required to get output from the create-runner job
+      - do-the-job # required to wait when the main job is done
+    runs-on: ubuntu-latest
+    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
+    steps:
+      - name: Delete runner
+        uses: Cyclenerd/hcloud-github-runner@v1
+        with:
+          mode: delete
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+          name: ${{ needs.create-runner.outputs.label }}
+          server_id: ${{ needs.create-runner.outputs.server_id }}
