@@ -26,7 +26,7 @@ source build/envsetup.sh
 export AB_OTA_UPDATER=false
 
 breakfast basic_x86_64_pc
-m recoveryimage
-mv out/target/product/virtio_arm64only/recovery.img ../../recovery-userdebug.img
-breakfast virtio_arm64only user # breakfast virtio_arm64only
+#m recoveryimage
+#mv out/target/product/virtio_arm64only/recovery.img ../../recovery-userdebug.img
+#breakfast virtio_arm64only user # breakfast virtio_arm64only
 m kernel ramdisk recoveryimage systemimage vendorimage
